@@ -45,6 +45,8 @@ public class PlayerController : MonoBehaviour
     float yaw, pitch;
     float baseCamY, bobT;
 
+    bool ready = false;
+
     /*════════════ Init ════════════*/
     void Awake()
     {
@@ -61,9 +63,7 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator SnapToGround()
     {
-       
         cc.enabled = false;
-        
         yield return new WaitForFixedUpdate();
 
         if (Physics.Raycast(transform.position + Vector3.up, Vector3.down, out RaycastHit hit, 10f, ~0, QueryTriggerInteraction.Ignore))
@@ -72,12 +72,15 @@ public class PlayerController : MonoBehaviour
             transform.position = hit.point + Vector3.up * bottom;
         }
         cc.enabled   = true;
-        verticalVel  = -2f; 
+        verticalVel  = -2f;
+        yield return null;   // ننتظر Frame إضافي
+        ready = true;        // الآن يبدأ Update
     }
 
     /*════════════ UPDATE ════════════*/
     void Update()
     {
+        if (!ready) return; // لا يشغل الحركة والجاذبية إلا بعد SnapToGround
         ReadInput();
         HandleLook();
         HandleMove();
