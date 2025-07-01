@@ -11,11 +11,11 @@ public class PistolGun : MonoBehaviour
     public GameObject muzzleFlash;
     public Transform cameraRoot;
 
-    Animator anim;
-    Vector3 originalCamPos;
-    float shakeDuration = 0f;
-    float shakeStrength = 0.09f;   // أقوى بوضوح
-    float shakeFadeSpeed = 8.5f;   // مناسب للسموث
+    private Animator anim;
+    private Vector3 originalCamPos;
+    private float shakeDuration = 0f;
+    private float shakeStrength = 0.09f;
+    private float shakeFadeSpeed = 8.5f;
 
     void Awake()
     {
@@ -27,6 +27,12 @@ public class PistolGun : MonoBehaviour
             originalCamPos = cameraRoot.localPosition;
     }
 
+    void Start()
+    {
+        // إصلاح مهم: امسح أي تريقر Fire في البداية
+        if (anim) anim.ResetTrigger("Fire");
+    }
+
     void Update()
     {
         // اطلاق النار
@@ -36,13 +42,12 @@ public class PistolGun : MonoBehaviour
             ammo--;
         }
 
-        // Camera Shake سموث وقوي
+        // Camera Shake
         if (cameraRoot)
         {
             if (shakeDuration > 0)
             {
                 Vector3 shakeOffset = Random.insideUnitSphere * shakeStrength;
-                // تقدر تثبت الزد لو تحب الهزة أفقية فقط:
                 shakeOffset.z = 0;
                 cameraRoot.localPosition = Vector3.Lerp(cameraRoot.localPosition, originalCamPos + shakeOffset, Time.deltaTime * shakeFadeSpeed);
                 shakeDuration -= Time.deltaTime;
@@ -62,9 +67,12 @@ public class PistolGun : MonoBehaviour
 
         // تشغيل الانميشن
         if (anim)
+        {
+            anim.ResetTrigger("Fire"); // تأكد أنه غير مفعّل أولاً (احتياط)
             anim.SetTrigger("Fire");
+        }
 
-        // Raycast للتصويب
+        // Raycast
         RaycastHit hit;
         Vector3 shootDir = playerCam.transform.forward;
         Vector3 shootOrigin = barrelLocation ? barrelLocation.position : playerCam.transform.position;
@@ -72,14 +80,13 @@ public class PistolGun : MonoBehaviour
         if (Physics.Raycast(shootOrigin, shootDir, out hit, range))
         {
             Debug.Log("Hit: " + hit.transform.name);
-            // تأثير إصابة الهدف هنا
+            // أضف هنا التأثير أو الضرر
         }
         else
         {
             Debug.Log("Miss!");
         }
 
-        // فعّل الاهتزاز (مدة أطول)
         shakeDuration = 0.18f;
     }
 
