@@ -4,80 +4,87 @@ using UnityEngine.AI;
 public class EnemyAI : MonoBehaviour
 {
     public Transform player;
-    public float walkSpeed = 1.8f;
+    public float patrolSpeed = 0.78f;
     public float runSpeed = 4.5f;
     public float startChaseDistance = 7f;
-    public float stopChaseDistance = 10f;
     public float vanishDistance = 1.2f;
-    public float wanderRadius = 8f;
-    public float wanderTimer = 5f;
+    public Transform[] patrolPoints;
+    public GameObject vanishEffect;
+    public Transform effectSpawnPoint; // أضفه هنا
 
     Animator animator;
     NavMeshAgent agent;
+    int currentPoint = 0;
     bool isChasing = false;
-    float timer;
+    bool hasVanished = false;
+    float waitTimer = 0f;
+    public float patrolWait = 2.5f;
 
     void Start()
     {
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
-        agent.speed = walkSpeed;
+        agent.speed = patrolSpeed;
         agent.stoppingDistance = vanishDistance;
-        timer = wanderTimer;
+
+        if (patrolPoints.Length > 0)
+            agent.SetDestination(patrolPoints[0].position);
     }
 
     void Update()
     {
-        if (!player) return;
+        if (!player || hasVanished) return;
+
         float dist = Vector3.Distance(transform.position, player.position);
 
-        // يبدأ يلاحق إذا قرب اللاعب
         if (!isChasing && dist < startChaseDistance)
         {
             isChasing = true;
             animator.SetBool("isRunning", true);
             agent.speed = runSpeed;
         }
-        // يرجع يهيم إذا ابتعد اللاعب
-        else if (isChasing && dist > stopChaseDistance)
-        {
-            isChasing = false;
-            animator.SetBool("isRunning", false);
-            agent.speed = walkSpeed;
-            timer = wanderTimer; // يعطيه بداية جديدة للتايمر
-        }
 
-        if (isChasing && dist > vanishDistance)
+        if (isChasing)
         {
-            agent.SetDestination(player.position);
-        }
-        else if (!isChasing)
-        {
-            // يهيم/يمشي عشوائي
-            timer += Time.deltaTime;
-            // استخدم شرط وصول ذكي
-            if (timer >= wanderTimer || 
-                (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.25f))
+            if (dist > vanishDistance)
             {
-                Vector3 newPos = RandomNavSphere(transform.position, wanderRadius, NavMesh.AllAreas);
-                agent.SetDestination(newPos);
-                timer = 0;
+                agent.SetDestination(player.position);
+            }
+            else
+            {
+                Vanish();
             }
         }
-        else if (dist <= vanishDistance)
+        else
         {
-            Destroy(gameObject);
+            if (!agent.pathPending && agent.remainingDistance < 0.3f)
+            {
+                waitTimer += Time.deltaTime;
+                if (waitTimer >= patrolWait)
+                {
+                    GoToNextPatrolPoint();
+                    waitTimer = 0f;
+                }
+            }
         }
     }
 
-    // يولد نقطة عشوائية ضمن دائرة حول العدو
-    public static Vector3 RandomNavSphere(Vector3 origin, float dist, int areaMask)
+    void GoToNextPatrolPoint()
     {
-        Vector3 randDirection = Random.insideUnitSphere * dist;
-        randDirection.y = 0; // حافظ على نفس المستوى
-        randDirection += origin;
-        NavMeshHit navHit;
-        NavMesh.SamplePosition(randDirection, out navHit, dist, areaMask);
-        return navHit.position;
+        if (patrolPoints.Length == 0) return;
+        currentPoint = (currentPoint + 1) % patrolPoints.Length;
+        agent.SetDestination(patrolPoints[currentPoint].position);
+    }
+
+    void Vanish()
+    {
+        hasVanished = true;
+        if (vanishEffect)
+        {
+            Vector3 spawnPos = effectSpawnPoint ? effectSpawnPoint.position : transform.position;
+            GameObject fx = Instantiate(vanishEffect, spawnPos, Quaternion.identity);
+            Destroy(fx, 2f);
+        }
+        Destroy(gameObject);
     }
 }
