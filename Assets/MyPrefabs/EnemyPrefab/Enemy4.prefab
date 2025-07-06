@@ -41,15 +41,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -61.69
+      value: -70.5246
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 10.049
+      value: 9.051
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -42.41
+      value: -37.81956
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
       propertyPath: m_LocalRotation.w
@@ -104,9 +104,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8907919238769788864}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 7744032744570688350}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
       insertIndex: -1
@@ -125,31 +122,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dfced72d35b94a76a46c27c7b8c6d58, type: 3}
   m_PrefabInstance: {fileID: 2362254756480232490}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8907919238769788864
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173071804213629307}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a0d30f0759a64d4e98541c72357fdd2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  patrolSpeed: 0.78
-  runSpeed: 1
-  startChaseDistance: 8
-  vanishDistance: 2
-  patrolPoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  vanishEffect: {fileID: 0}
-  effectSpawnPoint: {fileID: 8102540855064592913}
-  patrolWait: 0.5
 --- !u!136 &7744032744570688350
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -189,13 +161,16 @@ MonoBehaviour:
   patrolSpeed: 2.5
   chaseSpeed: 6
   chaseStartDistance: 8
-  vanishDistance: 1.1
-  patrolPoints: []
-  vanishEffect: {fileID: 0}
+  vanishDistance: 2
+  patrolPoints:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  vanishEffect: {fileID: 3193449757189135907, guid: 37c540ca03a1944e0a7d290553324a79, type: 3}
   effectSpawnPoint: {fileID: 0}
   vanishSound: {fileID: 0}
   audioSource: {fileID: 0}
-  patrolWait: 1.5
 --- !u!195 &-5083768788657263091
 NavMeshAgent:
   m_ObjectHideFlags: 0
