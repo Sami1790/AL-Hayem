@@ -3,14 +3,17 @@ using UnityEngine.AI;
 
 public class EnemyAI3 : MonoBehaviour
 {
-    public Transform player;               // اللاعب
-    public float crawlSpeed = 2.5f;        // سرعة الزحف
-    public float chaseStartDistance = 25f; // يبدأ يطارد إذا قرب اللاعب
-    public float vanishDistance = 1.1f;    // يختفي أو يهجم إذا قرب
-    public GameObject vanishEffect;        // افكت الدخان
-    public Transform effectSpawnPoint;     // مكان ظهور الدخان
-    public AudioClip vanishSound;          // الصوت
-    public AudioSource audioSource;        // مصدر الصوت
+    public Transform player;
+    public float crawlSpeed = 2.5f;
+    public float chaseStartDistance = 25f;
+    public float vanishDistance = 1.1f;
+    public GameObject vanishEffect;
+    public Transform effectSpawnPoint;
+    public AudioClip vanishSound;
+    public AudioSource audioSource;
+
+    public float madnessReduceOnKill = 5f; // ينقص الجنون إذا قتله اللاعب
+    public float madnessAddOnVanish = 10f; // يزيد الجنون إذا وصل قريب
 
     Animator animator;
     NavMeshAgent agent;
@@ -23,10 +26,10 @@ public class EnemyAI3 : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         agent.speed = crawlSpeed;
         agent.stoppingDistance = vanishDistance;
-        agent.enabled = false; // يبدأ غير مفعل، يتحرك فقط بعد اقتراب اللاعب
+        agent.enabled = false;
 
-        // يبدأ الأنميشن على Idle (تأكد أن Animator Default هو Idle)
-        animator.SetBool("isCrawling", false);
+        // يبدأ على Idle
+        if (animator) animator.SetBool("isCrawling", false);
     }
 
     void Update()
@@ -35,36 +38,46 @@ public class EnemyAI3 : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, player.position);
 
-        // يبدأ المطاردة إذا اقترب اللاعب من المسافة المطلوبة
+        // يبدأ يزحف إذا قرب اللاعب
         if (!isChasing && dist <= chaseStartDistance)
         {
             isChasing = true;
-            animator.SetBool("isCrawling", true); // يحول من Idle إلى زحف
+            if (animator) animator.SetBool("isCrawling", true);
             agent.enabled = true;
-            agent.Warp(transform.position); // يثبت مكانه قبل التحرك
+            agent.Warp(transform.position);
             agent.SetDestination(player.position);
         }
 
+        // إذا صار يلاحق
         if (isChasing && !hasVanished)
         {
             agent.SetDestination(player.position);
 
+            // إذا اقترب يختفي ويزيد الجنون
             if (dist < vanishDistance)
             {
-                Vanish();
+                Die(false);
             }
         }
     }
 
-    void Vanish()
+    // إذا أُصيب بطلقة ينقص الجنون
+    public void TakeHit()
     {
+        Die(true);
+    }
+
+    // دالة موحدة للموت
+    void Die(bool killedByPlayer)
+    {
+        if (hasVanished) return;
         hasVanished = true;
 
         // شغل الصوت
         if (audioSource && vanishSound)
             audioSource.PlayOneShot(vanishSound);
 
-        // طلع الدخان
+        // الدخان
         if (vanishEffect)
         {
             Vector3 fxPos = effectSpawnPoint ? effectSpawnPoint.position : transform.position + Vector3.up * 0.5f;
@@ -72,7 +85,16 @@ public class EnemyAI3 : MonoBehaviour
             Destroy(fx, 2f);
         }
 
-        // احذف الزاحف
+        // تحكم بالجنون
+        MadnessManager madness = FindFirstObjectByType<MadnessManager>();
+        if (madness)
+        {
+            if (killedByPlayer)
+                madness.ReduceMadness(madnessReduceOnKill);
+            else
+                madness.AddMadness(madnessAddOnVanish);
+        }
+
         Destroy(gameObject);
     }
 }

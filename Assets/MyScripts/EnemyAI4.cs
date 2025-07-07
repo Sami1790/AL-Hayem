@@ -14,6 +14,9 @@ public class EnemyAI4 : MonoBehaviour
     public AudioClip vanishSound;
     public AudioSource audioSource;
 
+    public float madnessReduceOnKill = 5f; // ينقص الجنون عند قتل العدو
+    public float madnessAddOnVanish = 10f; // يزيد الجنون عند اقتراب العدو من اللاعب
+
     Animator animator;
     NavMeshAgent agent;
     int currentPoint = 0;
@@ -26,7 +29,7 @@ public class EnemyAI4 : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         agent.speed = patrolSpeed;
         agent.stoppingDistance = vanishDistance;
-        animator.SetBool("isChasing", false);
+        if (animator) animator.SetBool("isChasing", false);
 
         if (patrolPoints.Length > 0)
             agent.SetDestination(patrolPoints[0].position);
@@ -38,11 +41,11 @@ public class EnemyAI4 : MonoBehaviour
 
         float dist = Vector3.Distance(transform.position, player.position);
 
-        // يبدأ الهجوم إذا قرب اللاعب
+        // يبدأ المطاردة إذا قرب اللاعب
         if (!isChasing && dist < chaseStartDistance)
         {
             isChasing = true;
-            animator.SetBool("isChasing", true);
+            if (animator) animator.SetBool("isChasing", true);
             agent.speed = chaseSpeed;
         }
 
@@ -51,16 +54,14 @@ public class EnemyAI4 : MonoBehaviour
         {
             agent.SetDestination(player.position);
             if (dist < vanishDistance)
-                Vanish();
+                Die(false); // هنا: وصل اللاعب (يزيد الجنون)
         }
         // باترول
         else if (!isChasing && patrolPoints.Length > 0)
         {
-            // إذا وصل نقطة الباترول ينتقل للي بعدها فوراً بدون لف ولا تأخير
+            // ينتقل لنقطة الباترول التالية فوراً
             if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.2f)
-            {
                 GoToNextPatrolPoint();
-            }
         }
     }
 
@@ -71,8 +72,16 @@ public class EnemyAI4 : MonoBehaviour
         agent.SetDestination(patrolPoints[currentPoint].position);
     }
 
-    void Vanish()
+    // إذا انقتل من اللاعب ينقص الجنون
+    public void TakeHit()
     {
+        Die(true);
+    }
+
+    // unified death: يفرق إذا قتل اللاعب أو اختفى بنفسه
+    void Die(bool killedByPlayer)
+    {
+        if (hasVanished) return;
         hasVanished = true;
 
         if (audioSource && vanishSound)
@@ -84,6 +93,17 @@ public class EnemyAI4 : MonoBehaviour
             GameObject fx = Instantiate(vanishEffect, fxPos, Quaternion.identity);
             Destroy(fx, 2f);
         }
+
+        // التحكم بالجنون
+        MadnessManager madness = FindFirstObjectByType<MadnessManager>();
+        if (madness)
+        {
+            if (killedByPlayer)
+                madness.ReduceMadness(madnessReduceOnKill);
+            else
+                madness.AddMadness(madnessAddOnVanish);
+        }
+
         Destroy(gameObject);
     }
 }

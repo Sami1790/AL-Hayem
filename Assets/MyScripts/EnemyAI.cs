@@ -10,7 +10,7 @@ public class EnemyAI : MonoBehaviour
     public float vanishDistance = 1.2f;
     public Transform[] patrolPoints;
     public GameObject vanishEffect;
-    public Transform effectSpawnPoint; // أضفه هنا
+    public Transform effectSpawnPoint;
 
     Animator animator;
     NavMeshAgent agent;
@@ -19,6 +19,9 @@ public class EnemyAI : MonoBehaviour
     bool hasVanished = false;
     float waitTimer = 0f;
     public float patrolWait = 2.5f;
+
+    public float madnessReduceOnKill = 5f; // من السلاح
+    public float madnessAddOnVanish = 10f; // إذا وصل اللاعب
 
     void Start()
     {
@@ -52,7 +55,8 @@ public class EnemyAI : MonoBehaviour
             }
             else
             {
-                Vanish();
+                // اختفى بسبب القرب من اللاعب (يزيد الجنون)
+                Die(false);
             }
         }
         else
@@ -76,15 +80,37 @@ public class EnemyAI : MonoBehaviour
         agent.SetDestination(patrolPoints[currentPoint].position);
     }
 
-    void Vanish()
+    // دالة موحدة للموت
+    // killedByPlayer = true إذا قتله السلاح، false إذا قرب منه اللاعب
+    public void Die(bool killedByPlayer)
     {
+        if (hasVanished) return;
         hasVanished = true;
+
+        // تأثير الدخان
         if (vanishEffect)
         {
             Vector3 spawnPos = effectSpawnPoint ? effectSpawnPoint.position : transform.position;
             GameObject fx = Instantiate(vanishEffect, spawnPos, Quaternion.identity);
             Destroy(fx, 2f);
         }
+
+        // التحكم في الجنون حسب نوع الموت
+        MadnessManager madness = FindFirstObjectByType<MadnessManager>();
+        if (madness)
+        {
+            if (killedByPlayer)
+                madness.ReduceMadness(madnessReduceOnKill);
+            else
+                madness.AddMadness(madnessAddOnVanish);
+        }
+
         Destroy(gameObject);
+    }
+
+    // تناديها رصاصة اللاعب
+    public void TakeHit()
+    {
+        Die(true);
     }
 }

@@ -2,12 +2,15 @@ using UnityEngine;
 
 public class EnemyAI2 : MonoBehaviour
 {
-    public Transform player;              // اللاعب
-    public float vanishDistance = 4f;     // المسافة المطلوبة للاختفاء
-    public GameObject vanishEffect;       // Prefab الدخان
-    public Transform effectSpawnPoint;    // مكان ظهور الدخان
-    public AudioClip vanishSound;         // ملف الصوت
-    public AudioSource audioSource;       // AudioSource لتشغيل الصوت
+    public Transform player;
+    public float vanishDistance = 4f;
+    public GameObject vanishEffect;
+    public Transform effectSpawnPoint;
+    public AudioClip vanishSound;
+    public AudioSource audioSource;
+
+    public float madnessReduceOnKill = 5f; // ينقص جنون إذا قُتل
+    public float madnessAddOnVanish = 10f; // يزيد جنون إذا قرب اللاعب
 
     bool hasVanished = false;
 
@@ -18,15 +21,23 @@ public class EnemyAI2 : MonoBehaviour
         float dist = Vector3.Distance(transform.position, player.position);
         if (dist < vanishDistance)
         {
-            Vanish();
+            Die(false); // اختفاء بسبب القرب من اللاعب
         }
     }
 
-    void Vanish()
+    // تناديها رصاصة اللاعب
+    public void TakeHit()
     {
+        Die(true); // قُتل بالسلاح
+    }
+
+    // دالة موحدة للموت: لو قُتل بالسلاح أو قرب اللاعب
+    void Die(bool killedByPlayer)
+    {
+        if (hasVanished) return;
         hasVanished = true;
 
-        // تشغيل صوت
+        // شغل الصوت
         if (audioSource && vanishSound)
             audioSource.PlayOneShot(vanishSound);
 
@@ -36,6 +47,16 @@ public class EnemyAI2 : MonoBehaviour
             Vector3 fxPos = effectSpawnPoint ? effectSpawnPoint.position : transform.position + Vector3.up * 0.7f;
             GameObject fx = Instantiate(vanishEffect, fxPos, Quaternion.identity);
             Destroy(fx, 2f);
+        }
+
+        // تحكم بالجنون
+        MadnessManager madness = FindFirstObjectByType<MadnessManager>();
+        if (madness)
+        {
+            if (killedByPlayer)
+                madness.ReduceMadness(madnessReduceOnKill);
+            else
+                madness.AddMadness(madnessAddOnVanish);
         }
 
         // حذف العدو

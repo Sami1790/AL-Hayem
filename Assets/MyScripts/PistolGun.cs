@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using TMPro; // تأكد أنك مستوردها فوق إذا بتستخدم TextMeshPro
 
 public class PistolGun : MonoBehaviour
 {
@@ -10,6 +11,9 @@ public class PistolGun : MonoBehaviour
     public Transform barrelLocation;
     public GameObject muzzleFlash;
     public Transform cameraRoot;
+
+    // متغير النص للرصاص
+    public TextMeshProUGUI ammoText; // اربطه في الانسبكتور
 
     private Animator anim;
     private Vector3 originalCamPos;
@@ -29,20 +33,19 @@ public class PistolGun : MonoBehaviour
 
     void Start()
     {
-        // إصلاح مهم: امسح أي تريقر Fire في البداية
         if (anim) anim.ResetTrigger("Fire");
+        UpdateAmmoUI();
     }
 
     void Update()
     {
-        // اطلاق النار
         if (Input.GetMouseButtonDown(0) && ammo > 0)
         {
             Shoot();
             ammo--;
+            UpdateAmmoUI();
         }
 
-        // Camera Shake
         if (cameraRoot)
         {
             if (shakeDuration > 0)
@@ -59,6 +62,12 @@ public class PistolGun : MonoBehaviour
         }
     }
 
+    void UpdateAmmoUI()
+    {
+        if (ammoText)
+            ammoText.text = ammo.ToString();
+    }
+
     void Shoot()
     {
         // تشغيل الفلاش
@@ -68,7 +77,7 @@ public class PistolGun : MonoBehaviour
         // تشغيل الانميشن
         if (anim)
         {
-            anim.ResetTrigger("Fire"); // تأكد أنه غير مفعّل أولاً (احتياط)
+            anim.ResetTrigger("Fire");
             anim.SetTrigger("Fire");
         }
 
@@ -80,7 +89,22 @@ public class PistolGun : MonoBehaviour
         if (Physics.Raycast(shootOrigin, shootDir, out hit, range))
         {
             Debug.Log("Hit: " + hit.transform.name);
-            // أضف هنا التأثير أو الضرر
+
+            // إذا عليه Tag "Enemy"
+            if (hit.transform.CompareTag("Enemy"))
+            {
+                // جرب كل أنواع السكربتات الممكنة للعدو، ونادي TakeHit إذا لقيته
+                var ai1 = hit.transform.GetComponent<EnemyAI>();
+                var ai2 = hit.transform.GetComponent<EnemyAI2>();
+                var ai3 = hit.transform.GetComponent<EnemyAI3>();
+                var ai4 = hit.transform.GetComponent<EnemyAI4>();
+
+                if      (ai1 != null) ai1.TakeHit();
+                else if (ai2 != null) ai2.TakeHit();
+                else if (ai3 != null) ai3.TakeHit();
+                else if (ai4 != null) ai4.TakeHit();
+                else Debug.Log("Enemy tag, but no AI script found!");
+            }
         }
         else
         {
