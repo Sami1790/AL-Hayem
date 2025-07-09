@@ -139,9 +139,11 @@ MonoBehaviour:
   chaseStartDistance: 25
   vanishDistance: 2
   vanishEffect: {fileID: 3193449757189135907, guid: 37c540ca03a1944e0a7d290553324a79, type: 3}
-  effectSpawnPoint: {fileID: 0}
+  effectSpawnPoint: {fileID: 8102540855064592913}
   vanishSound: {fileID: 0}
   audioSource: {fileID: 0}
+  madnessReduceOnKill: 5
+  madnessAddOnVanish: 10
 --- !u!136 &7744032744570688350
 CapsuleCollider:
   m_ObjectHideFlags: 0

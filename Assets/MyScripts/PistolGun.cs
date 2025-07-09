@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-using TMPro; // تأكد أنك مستوردها فوق إذا بتستخدم TextMeshPro
+using TMPro;
 
 public class PistolGun : MonoBehaviour
 {
@@ -11,9 +11,7 @@ public class PistolGun : MonoBehaviour
     public Transform barrelLocation;
     public GameObject muzzleFlash;
     public Transform cameraRoot;
-
-    // متغير النص للرصاص
-    public TextMeshProUGUI ammoText; // اربطه في الانسبكتور
+    public TextMeshProUGUI ammoText;
 
     private Animator anim;
     private Vector3 originalCamPos;
@@ -39,11 +37,21 @@ public class PistolGun : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && ammo > 0)
+        if (Input.GetMouseButtonDown(0))
         {
-            Shoot();
-            ammo--;
-            UpdateAmmoUI();
+            if (ammo > 0)
+            {
+                Shoot();
+                ammo--;
+                UpdateAmmoUI();
+                if (SoundManager.Instance != null)
+                    SoundManager.Instance.PlayGunShot();
+            }
+            else
+            {
+                if (SoundManager.Instance != null)
+                    SoundManager.Instance.PlayGunClick();
+            }
         }
 
         if (cameraRoot)
