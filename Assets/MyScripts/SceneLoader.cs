@@ -3,7 +3,13 @@ using UnityEngine.SceneManagement;
 
 public class SceneLoader : MonoBehaviour
 {
-    // يشغل مشهد اللعب (من القائمة أو من أي مكان)
+    // يشغل مشهد السينما (Intro) أولاً
+    public void PlayIntro()
+    {
+        SceneManager.LoadScene("IntroScene");
+    }
+
+    // زر السكب (أو Play داخل الانترو) يوديك مباشرة لمشهد اللعب
     public void PlayGame()
     {
         SceneManager.LoadScene("Main_Scene");
@@ -33,7 +39,6 @@ public class SceneLoader : MonoBehaviour
         Application.Quit();
 
 #if UNITY_EDITOR
-        // عشان يوقف التشغيل في محرر يونيتي
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }

@@ -7,7 +7,8 @@ using System.Collections;
 
 /// <summary>
 /// مدير الجنون: يتحكم في زيادة الجنون، ربطه بالتأثيرات البصرية،
-/// واجهة الجنون، مستوى موسيقى الجنون، وتحميل مشهد الخسارة.
+/// واجهة الجنون، مستوى موسيقى الجنون، وتحميل مشهد الخسارة،
+/// ويستدعي التولتيب التوضيحي.
 /// </summary>
 public class MadnessManager : MonoBehaviour
 {
@@ -21,8 +22,10 @@ public class MadnessManager : MonoBehaviour
 
     [Header("UI")]
     public Slider madnessBar;
-    public GameObject madnessUI;           // Panel أو Canvas فرعي (اجعله مخفي أولاً)
-    public CanvasGroup madnessCanvasGroup;  // حط CanvasGroup على نفس Panel واربطة هنا
+    public GameObject madnessUI;             // Panel أو Canvas فرعي (اجعله مخفي أولاً)
+    public CanvasGroup madnessCanvasGroup;   // حط CanvasGroup على نفس Panel واربطة هنا
+
+    public TooltipPanel tooltipPanel;        // مرجع لسكربت التولتيب (اسحبه في الانسبكتور)
 
     [Header("Post-Processing")]
     public Volume postProcessVolume;
@@ -122,6 +125,10 @@ public class MadnessManager : MonoBehaviour
         // يبدأ موسيقى الجنون إذا لم تكن تعمل
         if (soundManager != null)
             soundManager.PlayMadnessMusic(0.13f); // يبدأ منخفض
+
+        // ======= استدعاء التولتيب =======
+        if (tooltipPanel != null)
+            tooltipPanel.ShowPanel();
     }
 
     // Fade-In للواجهة
@@ -130,7 +137,7 @@ public class MadnessManager : MonoBehaviour
         float duration = 0.4f;
         float t = 0;
         madnessCanvasGroup.alpha = 0f;
-        madnessCanvasGroup.gameObject.SetActive(true); // يتأكد أنه ظاهر (لو كان مخفي)
+        madnessCanvasGroup.gameObject.SetActive(true);
 
         while (t < duration)
         {

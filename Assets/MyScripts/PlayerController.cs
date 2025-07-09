@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// تحكم منظور أول شخص: حركة، سبرنت، قفز ذكي، ستامينا، هيد-بوب.
-/// مع تصحيح اتجاه البداية (يبدأ اللاعب من نفس اتجاهه في المشهد).
+/// إضافة ميزة التجميد: إيقاف الحركة والكاميرا عند تفعيل التولتيب أو البانل.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour
     [Header("Stamina")]
     [SerializeField] float maxStamina = 6f;
     [SerializeField] float recoverRate = 1.8f;
-    [SerializeField] float drainRate   = 1.2f;
+    [SerializeField] float drainRate = 1.2f;
 
     // الكاميرا والهيد-بوب
     [Header("Camera & Head‑Bob")]
@@ -33,15 +33,15 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float mouseSensX = 2.5f;
     [SerializeField] float mouseSensY = 2.5f;
     [SerializeField] Vector2 pitchClamp = new(-89, 89);
-    [SerializeField] bool   headBob = true;
-    [SerializeField] float  bobAmp  = 0.05f;
-    [SerializeField] float  bobFreq = 9f;
+    [SerializeField] bool headBob = true;
+    [SerializeField] float bobAmp = 0.05f;
+    [SerializeField] float bobFreq = 9f;
 
     // متغيرات محلية
     CharacterController cc;
     Vector3 moveInput, velocity;
-    float   verticalVel, speed;
-    bool    sprintHeld;
+    float verticalVel, speed;
+    bool sprintHeld;
 
     float stamina;
     float lastGrounded, lastJumpCmd;
@@ -51,23 +51,25 @@ public class PlayerController : MonoBehaviour
 
     bool ready = false;
 
+    // ========= NEW: لتجميد الحركة/الكاميرا =========
+    [HideInInspector]
+    public bool isFrozen = false; // عدلها من أي سكربت خارجي (زي التولتيب بانل)
+
     void Awake()
     {
         cc = GetComponent<CharacterController>();
         if (!cameraRoot) cameraRoot = Camera.main.transform;
         baseCamY = cameraRoot.localPosition.y;
-        stamina  = maxStamina;
+        stamina = maxStamina;
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        Cursor.visible = false;
         cc.stepOffset = 0f;
 
-        // إصلاح القفز التلقائي عند بدء اللعبة
-        lastJumpCmd  = -999f;
+        lastJumpCmd = -999f;
         lastGrounded = Time.time - 10f;
 
-        // تصحيح اتجاه البداية (yaw/pitch من اتجاه الجسم والكاميرا)
         Vector3 startAngles = transform.eulerAngles;
-        yaw   = startAngles.y;
+        yaw = startAngles.y;
         pitch = cameraRoot.localEulerAngles.x;
     }
 
@@ -83,8 +85,8 @@ public class PlayerController : MonoBehaviour
             float bottom = cc.height * 0.5f - cc.center.y + cc.skinWidth + 0.001f;
             transform.position = hit.point + Vector3.up * bottom;
         }
-        cc.enabled   = true;
-        verticalVel  = -2f;
+        cc.enabled = true;
+        verticalVel = -2f;
         yield return null;
         ready = true;
     }
@@ -92,6 +94,10 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         if (!ready) return;
+        // ========= إيقاف كل شيء إذا كان مجمّد =========
+        if (isFrozen)
+            return;
+
         ReadInput();
         HandleLook();
         HandleMove();
@@ -102,26 +108,23 @@ public class PlayerController : MonoBehaviour
         cc.Move((velocity + Vector3.up * verticalVel) * Time.deltaTime);
     }
 
-    /// <summary> يقرأ إدخال الحركة والركض والقفز </summary>
     void ReadInput()
     {
-        moveInput   = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
-        sprintHeld  = Input.GetKey(KeyCode.LeftShift);
+        moveInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
+        sprintHeld = Input.GetKey(KeyCode.LeftShift);
         if (Input.GetButtonDown("Jump"))
             lastJumpCmd = Time.time;
     }
 
-    /// <summary> إدارة تدوير الكاميرا واللاعب بالفأرة </summary>
     void HandleLook()
     {
-        yaw   += Input.GetAxis("Mouse X") * mouseSensX;
+        yaw += Input.GetAxis("Mouse X") * mouseSensX;
         pitch -= Input.GetAxis("Mouse Y") * mouseSensY;
-        pitch  = Mathf.Clamp(pitch, pitchClamp.x, pitchClamp.y);
+        pitch = Mathf.Clamp(pitch, pitchClamp.x, pitchClamp.y);
         cameraRoot.localRotation = Quaternion.Euler(pitch, 0, 0);
-        transform.rotation       = Quaternion.Euler(0, yaw, 0);
+        transform.rotation = Quaternion.Euler(0, yaw, 0);
     }
 
-    /// <summary> إدارة الحركة الأفقية والتسارع والسرعة الحالية </summary>
     void HandleMove()
     {
         bool wantsSprint = sprintHeld && stamina > .1f && moveInput.sqrMagnitude > .01f;
@@ -129,10 +132,9 @@ public class PlayerController : MonoBehaviour
         Vector3 desired = (transform.right * moveInput.x + transform.forward * moveInput.z) * targetSpeed;
         float accel = (desired.magnitude > speed) ? acceleration : deceleration;
         velocity = Vector3.MoveTowards(velocity, desired, accel * Time.deltaTime);
-        speed    = velocity.magnitude;
+        speed = velocity.magnitude;
     }
 
-    /// <summary> معالجة القفز والجاذبية بمنع القفز إلا بعد الضغط الفعلي </summary>
     void HandleGravityJump()
     {
         if (cc.isGrounded)
@@ -146,9 +148,8 @@ public class PlayerController : MonoBehaviour
         }
 
         bool pressedJump = (Time.time - lastJumpCmd) <= jumpBuffer;
-        bool canCoyote   = (Time.time - lastGrounded) <= coyoteTime;
+        bool canCoyote = (Time.time - lastGrounded) <= coyoteTime;
 
-        // لا يسمح بالقفز إلا بعد أول ضغط زر
         if (lastJumpCmd > 0f && pressedJump && canCoyote)
         {
             verticalVel = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
@@ -156,7 +157,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /// <summary> تحديث ستامينا: تستهلك بالركض وتعود إذا لم تركض </summary>
     void HandleStamina()
     {
         bool draining = sprintHeld && moveInput.sqrMagnitude > .01f;
@@ -164,7 +164,6 @@ public class PlayerController : MonoBehaviour
         stamina = Mathf.Clamp(stamina, 0, maxStamina);
     }
 
-    /// <summary> يهز الكاميرا أثناء المشي/الركض لواقعية أكثر </summary>
     void HandleHeadBob()
     {
         if (cc.isGrounded && moveInput.sqrMagnitude > .01f)
@@ -180,9 +179,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /// <summary> إعادة تعبئة ستامينا (للاختبارات) </summary>
     public void RefillStamina() => stamina = maxStamina;
-
-    /// <summary> كم ستامينا بقي؟ </summary>
     public float StaminaPercent() => stamina / maxStamina;
 }

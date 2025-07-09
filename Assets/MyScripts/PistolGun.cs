@@ -37,6 +37,10 @@ public class PistolGun : MonoBehaviour
 
     void Update()
     {
+        // أهم سطر: لا تطلق إذا بانل التولتيب ظاهر
+        if (TooltipPanel.TooltipActive)
+            return;
+
         if (Input.GetMouseButtonDown(0))
         {
             if (ammo > 0)
